@@ -97,6 +97,7 @@ func (dm *DoDropletMarshaller) DeployDroplet(c *godo.Client, currentDeployNum, n
 				// Deploy a 14.04 build w/ Docker pre-installed
 				Slug: "docker",
 			},
+			// The section after #cloud-config can be edited with cloud config scripting
 			UserData: `
 			#cloud-config
 			runcmd:
