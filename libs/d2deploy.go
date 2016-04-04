@@ -1,4 +1,4 @@
-package utils
+package libs
 
 import (
 	"fmt"
@@ -82,6 +82,66 @@ func (dm *DoDropletMarshaller) GetRegions(c *godo.Client) ([]string, error) {
 	return regionsAll, nil
 }
 
+func (dm *DoDropletMarshaller) GetAllImages(c *godo.Client) ([]models.ImageStruct, error) {
+	imagesLO := &godo.ListOptions{
+		Page:    1,
+		PerPage: 999,
+	}
+	images, _, err := c.Images.List(imagesLO)
+	if err != nil {
+		fmt.Printf("Could not obtain list of images: %s\n\n", err)
+		return nil, err
+	}
+
+	is := &models.ImageStruct{}
+	var imageList []models.ImageStruct
+	for _, v := range images {
+		if v.Name == "" {
+			is.Name = "Unavailable"
+		} else {
+			is.Name = v.Name
+		}
+		if v.Distribution == "" {
+			is.Distribution = "Unavailable"
+		} else {
+			is.Distribution = v.Distribution
+		}
+		if v.Slug == "" {
+			is.Slug = "Unavailable"
+		} else {
+			is.Slug = v.Slug
+		}
+		imageList = append(imageList, *is)
+	}
+	return imageList, nil
+}
+
+func (dm *DoDropletMarshaller) GetDropletSizes(c *godo.Client) ([]models.SizeStruct, error) {
+	opt := &godo.ListOptions{
+		Page:    1,
+		PerPage: 200,
+	}
+
+	sizes, _, err := c.Sizes.List(opt)
+	if err != nil {
+		fmt.Printf("Could not obtain list of droplet sizes: %s\n\n", err)
+		return nil, err
+	}
+
+	ss := &models.SizeStruct{}
+	var sizeList []models.SizeStruct
+	for _, v := range sizes {
+		ss.Slug = v.Slug
+		ss.Memory = v.Memory
+		ss.VCPU = v.Vcpus
+		ss.Disk = v.Disk
+		ss.Transfer = v.Transfer
+		ss.Cost = v.PriceHourly
+		sizeList = append(sizeList, *ss)
+	}
+	return sizeList, nil
+}
+
 func (dm *DoDropletMarshaller) DeployDroplet(s *models.DODeployStruct) (string, error) {
 	c := s.Client
 	allowableDroplets := s.DropletLimit - s.CurrentDeployNum
@@ -99,7 +159,7 @@ func (dm *DoDropletMarshaller) DeployDroplet(s *models.DODeployStruct) (string, 
 		createRequest := &godo.DropletCreateRequest{
 			Name:   s.DropletName + "-" + strconv.Itoa(depIdx),
 			Region: s.RegionsAll[regIdx],
-			Size:   "512mb",
+			Size:   s.Size,
 			// ssh-keygen -lf ~/.ssh/id_rsa.pub | cut -d " " -f 2
 			SSHKeys: []godo.DropletCreateSSHKey{
 				godo.DropletCreateSSHKey{
@@ -107,15 +167,10 @@ func (dm *DoDropletMarshaller) DeployDroplet(s *models.DODeployStruct) (string, 
 				},
 			},
 			Image: godo.DropletCreateImage{
-				// Deploy a 14.04 build w/ Docker pre-installed
-				Slug: "docker",
+				Slug: s.Slug,
 			},
-			// The section after #cloud-config can be edited with cloud config scripting
-			UserData: `
-			#cloud-config
-			runcmd:
-				- apt-get install -y git
-			`,
+			// The section for cloud config scripting
+			UserData: s.UserData,
 		}
 		_, res, err := c.Droplets.Create(createRequest)
 

@@ -1,0 +1,26 @@
+# The DO OAuth token
+token: <DO OAuth API Key>
+
+# The number of droplets to deploy
+# Example: deploy_num: 5
+deploy_num: <number of deployments>
+
+# The name to be prepend to each droplet
+# Example: droplet_name: packetresearch
+droplet_name: test
+
+# The name of the droplet slug
+# Example: slug_name: docker
+slug_name: docker
+
+# The size of the droplet slug (512mb is the default)
+# Example: slug_size: 512mb
+slug_size: 512mb
+
+# The ssh public key fingerprint
+# Example: ssh_id: "aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp"
+ssh_id: "aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp"
+
+# The location of the yaml configuration file containing droplet build scripts
+# Example: userdata_file: "configs/user-data.yml"
+userdata_file: "configs/user-data.yml"
